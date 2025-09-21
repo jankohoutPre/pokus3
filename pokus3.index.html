@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<title>Denni Denik – Kalorie, Sport, Nálada, Finance</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Rubik:wght@400;700&display=swap');
+
+body {
+  font-family: 'Rubik', sans-serif;
+  margin: 0;
+  background: linear-gradient(135deg, #FFDEE9, #B5FFFC);
+  color: #333;
+}
+header {
+  position: fixed;
+  width: 100%;
+  top: 0;
+  background: rgba(255,255,255,0.9);
+  display: flex;
+  justify-content: center;
+  padding: 10px 0;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  z-index: 100;
+}
+header a {
+  margin: 0 15px;
+  text-decoration: none;
+  font-weight: bold;
+  color: #FF6B6B;
+}
+section {
+  margin: 100px auto 50px auto;
+  padding: 20px;
+  background: rgba(255,255,255,0.85);
+  border-radius: 25px;
+  max-width: 800px;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+h1,h2 {
+  text-align: center;
+}
+label {display:block; margin-top:10px;}
+input, select {padding:8px; margin-top:5px; width:100%; border-radius:15px; border:2px solid #FFD6FF; background:#FFF0F5;}
+button {
+  padding: 10px 20px;
+  border:none;
+  border-radius:30px;
+  background: linear-gradient(135deg,#6EE7B7,#3B82F6);
+  color:white; font-weight:bold;
+  margin-top:10px; cursor:pointer;
+  transition:0.3s;
+}
+button:hover {transform:translateY(-3px); box-shadow:0 12px 20px rgba(0,0,0,0.25);}
+canvas {display:block; margin:20px auto; background:rgba(255,255,255,0.85); border-radius:25px; padding:15px; box-shadow:0 10px 20px rgba(0,0,0,0.1);}
+.meal div {margin-bottom:10px;}
+.trenink-info {background:#E0FFFF; padding:10px; border-radius:15px; margin-top:10px;}
+.finance-item {margin-bottom:10px;}
+.mood-input {width:100%; border:2px solid #FFD700; background:#FFFACD; border-radius:15px; padding:5px;}
+</style>
+</head>
+<body>
+
+<header>
+  <a href="#jidlo">Jídlo</a>
+  <a href="#treninky">Tréninky</a>
+  <a href="#nalada">Nálada</a>
+  <a href="#finance">Finance</a>
+</header>
+
+<section id="jidlo">
+  <h2>🍽️ Jídlo</h2>
+  <div>
+    <h3>Snídaně</h3>
+    <div class="meal" id="meal1"></div>
+    <button onclick="pridatPolozku('meal1')">➕ Přidat položku</button>
+  </div>
+  <div>
+    <h3>Oběd</h3>
+    <div class="meal" id="meal2"></div>
+    <button onclick="pridatPolozku('meal2')">➕ Přidat položku</button>
+  </div>
+  <div>
+    <h3>Večeře</h3>
+    <div class="meal" id="meal3"></div>
+    <button onclick="pridatPolozku('meal3')">➕ Přidat položku</button>
+  </div>
+</section>
+
+<section id="treninky">
+  <h2>🏋️‍♂️ Tréninky</h2>
+  <label for="trenink">Vyber trénink:</label>
+  <select id="trenink">
+    <option value="0">Žádný</option>
+    <option value="200">Běh 30 min (~200 kcal)</option>
+    <option value="150">Cvičení 30 min (~150 kcal)</option>
+    <option value="400">Intenzivní sport 1h (~400 kcal)</option>
+  </select>
+  <div class="trenink-info" id="trenink-info">Tipy: Vyber trénink pro návod.</div>
+</section>
+
+<section id="nalada">
+  <h2>😊 Nálada a pocity</h2>
+  <label>Snídaně:</label><input type="text" class="mood-input" id="mood1" placeholder="Jak ses cítil po snídani?">
+  <label>Oběd:</label><input type="text" class="mood-input" id="mood2" placeholder="Jak ses cítil po obědě?">
+  <label>Večeře:</label><input type="text" class="mood-input" id="mood3" placeholder="Jak ses cítil po večeři?">
+  <label>Po tréninku:</label><input type="text" class="mood-input" id="mood4" placeholder="Jak ses cítil po cvičení?">
+</section>
+
+<section id="finance">
+  <h2>💸 Finance</h2>
+  <div id="finance-list"></div>
+  <button onclick="pridatFinance()">➕ Přidat výdaj</button>
+</section>
+
+<section>
+  <button onclick="spocitej()">✅ Spočítat denní souhrn</button>
+  <div id="vysledek"></div>
+  <canvas id="graf" width="700" height="300"></canvas>
+</section>
+
+<script>
+const potraviny = {
+  rice: 1.3, chicken: 1.65, bread: 2.5, apple:0.52, egg:70, milk:0.42,
+  cheese:3.5, banana:0.89, potatoes:0.77, beef:2.5, fish:2, salad:0.2,
+  pasta:1.5, carrot:0.41, tomato:0.18, yogurt:0.59
+};
+function pridatPolozku(mealId){
+  const container = document.getElementById(mealId);
+  const div = document.createElement('div');
+  div.innerHTML = `<select>${Object.keys(potraviny).map(k=>`<option value="${k}">${k} (${Math.round(potraviny[k]*100)} kcal/100g)</option>`).join('')}</select>
+  <input type="number" value="100" style="width:60px;"> g/ks`;
+  container.appendChild(div);
+}
+['meal1','meal2','meal3'].forEach(id=>pridatPolozku(id));
+
+const treninkTips = {
+  200:"Běh: 5 min rozehřátí, pak střední tempo 25 min.",
+  150:"Cvičení: 3 série dřepů, kliků, prkno 1 min.",
+  400:"Intenzivní sport: HIIT 20 min, silový trénink 40 min."
+};
+
+document.getElementById('trenink').addEventListener('change', function(){
+  const val = this.value;
+  document.getElementById('trenink-info').innerText = treninkTips[val] || "Žádný trénink.";
+});
+
+// Finance
+function pridatFinance(){
+  const container = document.getElementById('finance-list');
+  const div = document.createElement('div');
+  div.className = 'finance-item';
+  div.innerHTML = `<input type="text" placeholder="Popis výdaje"> <input type="number" placeholder="Částka">`;
+  container.appendChild(div);
+}
+
+function spocitej(){
+  const meals = ['meal1','meal2','meal3'];
+  let celkemKalorie=0; let dataGraf=[]; let labelGraf=['Snídaně','Oběd','Večeře'];
+  meals.forEach((mealId,index)=>{
+    const divy = document.getElementById(mealId).children;
+    let mealKcal=0;
+    for(let div of divy){
+      const select=div.querySelector('select'); const input=div.querySelector('input');
+      mealKcal += potraviny[select.value]*parseFloat(input.value);
+    }
+    dataGraf.push(Math.round(mealKcal)); celkemKalorie+=mealKcal;
+  });
+
+  const typPrace='sedava'; // pro jednoduchost, můžeš přidat výběr
+  let bazal = typPrace==='sedava'?1800:2500;
+  const sport=parseFloat(document.getElementById('trenink').value);
+  const celkemSpaleno=bazal+sport;
+
+  // Finance
+  let financeItems = document.querySelectorAll('.finance-item');
+  let totalFinance=0;
+  financeItems.forEach(item=>{
+    const amount = item.querySelector('input[type="number"]').value;
+    totalFinance+=parseFloat(amount)||0;
+  });
+
+  // Mood
+  const moods = ['mood1','mood2','mood3','mood4'].map(id=>document.getElementById(id).value);
+
+  document.getElementById('vysledek').innerHTML = 
+    `Kalorie ze stravy: ${Math.round(celkemKalorie)} kcal<br>`+
+    `Odhad spálených kalorií: ${Math.round(celkemSpaleno)} kcal<br>`+
+    `Bilance: ${Math.round(celkemKalorie-celkemSpaleno)} kcal<br>`+
+    `Celkové finance: ${totalFinance} Kč<br>`+
+    `Nálada: <br> Snídaně:${moods[0]}, Oběd:${moods[1]}, Večeře:${moods[2]}, Po cvičení:${moods[3]}`;
+
+  // graf
+  const canvas=document.getElementById('graf'); const ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const maxKcal=Math.max(...dataGraf,celkemSpaleno);
+  dataGraf.push(celkemSpaleno); labelGraf.push('Spaleno');
+  const barWidth=80; const gap=50;
+  dataGraf.forEach((val,i)=>{
+    const barHeight=val/maxKcal*200;
+    ctx.fillStyle=i===3?'#FF6B6B':'#6BCB77';
+    ctx.fillRect(50+i*(barWidth+gap),250-barHeight,barWidth,barHeight);
+    ctx.fillStyle='#333';
+    ctx.fillText(val,50+i*(barWidth+gap)+15,245-barHeight);
+    ctx.fillText(labelGraf[i],50+i*(barWidth+gap),270);
+  });
+}
+</script>
+</body>
+</html>
